@@ -19,19 +19,30 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import styles from './ArticleParamsForm.module.scss';
 
 type ArticleParamsFormProps = {
-  onApply: (state: ArticleStateType) => void;
+  onApply: (nextArticleState: ArticleStateType) => void;
 };
 
 export const ArticleParamsForm = ({
   onApply,
 }: ArticleParamsFormProps): React.JSX.Element => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [formState, setFormState] = useState<ArticleStateType>(defaultArticleState);
-  const formRef = useRef<HTMLElement | null>(null);
+
+  const sidebarRef = useRef<HTMLElement | null>(null);
+  const arrowButtonRef = useRef<HTMLDivElement | null>(null);
 
   const handleToggle = (): void => {
-    setIsOpen((prevState) => !prevState);
+    setIsSidebarOpen((prevIsOpen) => !prevIsOpen);
   };
+
+  const handleChange =
+    <K extends keyof ArticleStateType>(field: K) =>
+    (value: ArticleStateType[K]): void => {
+      setFormState((prevFormState) => ({
+        ...prevFormState,
+        [field]: value,
+      }));
+    };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
@@ -44,13 +55,21 @@ export const ArticleParamsForm = ({
   };
 
   useEffect(() => {
-    if (!isOpen) {
+    if (!isSidebarOpen) {
       return;
     }
 
     const handleOutsideClick = (event: MouseEvent): void => {
-      if (formRef.current && !formRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
+      if (!(event.target instanceof Node)) {
+        return;
+      }
+
+      const isOutsideSidebar = !sidebarRef.current?.contains(event.target);
+
+      const isOutsideArrowButton = !arrowButtonRef.current?.contains(event.target);
+
+      if (isOutsideSidebar && isOutsideArrowButton) {
+        setIsSidebarOpen(false);
       }
     };
 
@@ -59,14 +78,19 @@ export const ArticleParamsForm = ({
     return (): void => {
       document.removeEventListener('mousedown', handleOutsideClick);
     };
-  }, [isOpen]);
+  }, [isSidebarOpen]);
 
   return (
     <>
-      <ArrowButton isOpen={isOpen} onClick={handleToggle} />
+      <ArrowButton
+        buttonRef={arrowButtonRef}
+        isOpen={isSidebarOpen}
+        onClick={handleToggle}
+      />
+
       <aside
-        ref={formRef}
-        className={clsx(styles.container, isOpen && styles.container_open)}
+        ref={sidebarRef}
+        className={clsx(styles.container, isSidebarOpen && styles.container_open)}
       >
         <form className={styles.form} onSubmit={handleSubmit} onReset={handleReset}>
           <Text as="h2" size={31} weight={800} uppercase>
@@ -78,12 +102,7 @@ export const ArticleParamsForm = ({
               title="Шрифт"
               options={fontFamilyOptions}
               selected={formState.fontFamilyOption}
-              onChange={(selected) =>
-                setFormState((prevState) => ({
-                  ...prevState,
-                  fontFamilyOption: selected,
-                }))
-              }
+              onChange={handleChange('fontFamilyOption')}
             />
 
             <RadioGroup
@@ -91,24 +110,14 @@ export const ArticleParamsForm = ({
               title="Размер шрифта"
               options={fontSizeOptions}
               selected={formState.fontSizeOption}
-              onChange={(selected) =>
-                setFormState((prevState) => ({
-                  ...prevState,
-                  fontSizeOption: selected,
-                }))
-              }
+              onChange={handleChange('fontSizeOption')}
             />
 
             <Select
               title="Цвет шрифта"
               options={fontColors}
               selected={formState.fontColor}
-              onChange={(selected) =>
-                setFormState((prevState) => ({
-                  ...prevState,
-                  fontColor: selected,
-                }))
-              }
+              onChange={handleChange('fontColor')}
             />
 
             <div className={styles.backgroundBlock}>
@@ -118,12 +127,7 @@ export const ArticleParamsForm = ({
                 title="Цвет фона"
                 options={backgroundColors}
                 selected={formState.backgroundColor}
-                onChange={(selected) =>
-                  setFormState((prevState) => ({
-                    ...prevState,
-                    backgroundColor: selected,
-                  }))
-                }
+                onChange={handleChange('backgroundColor')}
               />
             </div>
 
@@ -131,12 +135,7 @@ export const ArticleParamsForm = ({
               title="Ширина контента"
               options={contentWidthArr}
               selected={formState.contentWidth}
-              onChange={(selected) =>
-                setFormState((prevState) => ({
-                  ...prevState,
-                  contentWidth: selected,
-                }))
-              }
+              onChange={handleChange('contentWidth')}
             />
           </div>
 

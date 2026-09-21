@@ -1,5 +1,5 @@
+import arrow from '@/images/arrow.svg';
 import { clsx } from 'clsx';
-import arrow from 'src/images/arrow.svg';
 
 import styles from './ArrowButton.module.scss';
 
@@ -9,15 +9,18 @@ export type OnClick = () => void;
 type ArrowButtonProps = {
   isOpen: boolean;
   onClick: OnClick;
+  buttonRef?: React.Ref<HTMLDivElement>;
 };
 
 export const ArrowButton = ({
   isOpen,
   onClick,
+  buttonRef,
 }: ArrowButtonProps): React.JSX.Element => {
   return (
     /* Не забываем указаывать role и aria-label атрибуты для интерактивных элементов */
     <div
+      ref={buttonRef}
       role="button"
       aria-label="Открыть/Закрыть форму параметров статьи"
       tabIndex={0}
